@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>图片编辑器</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+</head>
+<body>
+    <div id="app">
+        <!-- 首页 -->
+        <div id="home" class="page active">
+            <header>
+                <h1>图片编辑器</h1>
+                <p class="subtitle">拼图 / 编辑 / 转换</p>
+            </header>
+            <div class="feature-grid">
+                <div class="feature-card" data-action="grid">
+                    <div class="feature-icon">拼</div>
+                    <span>宫格拼图</span>
+                </div>
+                <div class="feature-card" data-action="long">
+                    <div class="feature-icon">长</div>
+                    <span>长图拼接</span>
+                </div>
+                <div class="feature-card" data-action="bw">
+                    <div class="feature-icon">黑白</div>
+                    <span>黑白二值</span>
+                </div>
+                <div class="feature-card" data-action="cutout">
+                    <div class="feature-icon">抠</div>
+                    <span>智能抠图</span>
+                </div>
+                <div class="feature-card" data-action="crop">
+                    <div class="feature-icon">裁</div>
+                    <span>裁剪旋转</span>
+                </div>
+                <div class="feature-card" data-action="adjust">
+                    <div class="feature-icon">调</div>
+                    <span>调色增强</span>
+                </div>
+                <div class="feature-card" data-action="compress">
+                    <div class="feature-icon">压</div>
+                    <span>压缩转换</span>
+                </div>
+                <div class="feature-card" data-action="fill">
+                    <div class="feature-icon">填</div>
+                    <span>空位填充</span>
+                </div>
+                <div class="feature-card" data-action="selective-color">
+                    <div class="feature-icon">彩</div>
+                    <span>局部色彩</span>
+                </div>
+                <div class="feature-card" data-action="circle-crop">
+                    <div class="feature-icon">圆</div>
+                    <span>圆形裁剪</span>
+                </div>
+                <div class="feature-card" data-action="split">
+                    <div class="feature-icon">切</div>
+                    <span>图片分割</span>
+                </div>
+                <div class="feature-card" data-action="batch">
+                    <div class="feature-icon">批</div>
+                    <span>批量处理</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 拼图页面 -->
+        <div id="grid-page" class="page">
+            <header class="page-header">
+                <button class="back-btn" data-back>← 返回</button>
+                <h2>宫格拼图</h2>
+                <button class="save-btn" id="exportBtn">保存</button>
+            </header>
+
+            <!-- 模板选择 -->
+            <div class="template-bar">
+                <button class="tpl-btn active" data-tpl="2">2格</button>
+                <button class="tpl-btn" data-tpl="4">4格</button>
+                <button class="tpl-btn" data-tpl="6">6格</button>
+                <button class="tpl-btn" data-tpl="8">8格</button>
+                <button class="tpl-btn" data-tpl="9">9格</button>
+            </div>
+
+            <!-- 画布区域 -->
+            <div class="canvas-wrap">
+                <canvas id="gridCanvas"></canvas>
+            </div>
+
+            <!-- 图片槽位 -->
+            <div class="slots-bar" id="slotsBar"></div>
+
+            <!-- 导入按钮 -->
+            <div class="import-area">
+                <button class="import-btn" id="addPhotosBtn">+ 添加图片</button>
+                <input type="file" id="photoInput" accept="image/*" multiple hidden>
+            </div>
+
+            <!-- 设置面板 -->
+            <div class="settings-panel">
+                <div class="setting-row">
+                    <label>圆角</label>
+                    <input type="range" id="borderRadius" min="0" max="50" value="0">
+                    <span id="radiusVal">0</span>
+                </div>
+                <div class="setting-row">
+                    <label>间距</label>
+                    <input type="range" id="spacing" min="0" max="30" value="4">
+                    <span id="spacingVal">4</span>
+                </div>
+                <div class="setting-row">
+                    <label>填充</label>
+                    <div class="fill-mode-bar">
+                        <button class="fill-btn active" data-mode="contain">完整</button>
+                        <button class="fill-btn" data-mode="cover">裁剪</button>
+                        <button class="fill-btn" data-mode="stretch">拉伸</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>背景色</label>
+                    <div class="color-options" id="bgColors">
+                        <span class="color-dot active" data-color="#ffffff" style="background:#ffffff"></span>
+                        <span class="color-dot" data-color="#000000" style="background:#000000"></span>
+                        <span class="color-dot" data-color="#f5f5f5" style="background:#f5f5f5"></span>
+                        <span class="color-dot" data-color="#ff6b6b" style="background:#ff6b6b"></span>
+                        <span class="color-dot" data-color="#4ecdc4" style="background:#4ecdc4"></span>
+                        <span class="color-dot" data-color="#ffe66d" style="background:#ffe66d"></span>
+                        <span class="color-dot" data-color="#a29bfe" style="background:#a29bfe"></span>
+                        <span class="color-dot" data-color="#fd79a8" style="background:#fd79a8"></span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>空位</label>
+                    <div class="fill-mode-bar">
+                        <button class="fill-btn" data-empty="auto">跟随背景</button>
+                        <button class="fill-btn" data-empty="#ffffff">白色</button>
+                        <button class="fill-btn" data-empty="#000000">黑色</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 长图拼接页面 -->
+        <div id="long-page" class="page">
+            <header class="page-header">
+                <button class="back-btn" data-back>← 返回</button>
+                <h2>长图拼接</h2>
+                <button class="save-btn" id="longExportBtn">保存</button>
+            </header>
+            <div class="template-bar">
+                <button class="tpl-btn active" data-dir="vertical">竖版</button>
+                <button class="tpl-btn" data-dir="horizontal">横版</button>
+            </div>
+            <div class="canvas-wrap scrollable">
+                <canvas id="longCanvas"></canvas>
+            </div>
+            <div class="slots-bar" id="longSlotsBar"></div>
+            <div class="import-area" style="display:flex;gap:8px;">
+                <button class="import-btn" id="addLongPhotosBtn" style="flex:1">+ 添加图片</button>
+                <button class="import-btn" id="clearLongPhotosBtn" style="flex:0 0 auto;color:#ff4757;border-color:#ff475766;padding:6px 10px;font-size:12px;">清空</button>
+                <input type="file" id="longPhotoInput" accept="image/*" multiple hidden>
+            </div>
+            <div class="settings-panel">
+                <div class="setting-row">
+                    <label>间距</label>
+                    <input type="range" id="longSpacing" min="0" max="60" value="0">
+                    <span id="longSpacingVal">0</span>
+                </div>
+                <div class="setting-row" id="longGapColorRow" style="display:none">
+                    <label>间隔色</label>
+                    <div class="color-options" id="longGapColors">
+                        <span class="color-dot active" data-color="#ffffff" style="background:#ffffff"></span>
+                        <span class="color-dot" data-color="#000000" style="background:#000000"></span>
+                        <span class="color-dot" data-color="#f5f5f5" style="background:#f5f5f5"></span>
+                        <span class="color-dot" data-color="#ff6b6b" style="background:#ff6b6b"></span>
+                        <span class="color-dot" data-color="#4ecdc4" style="background:#4ecdc4"></span>
+                        <span class="color-dot" data-color="#ffe66d" style="background:#ffe66d"></span>
+                        <span class="color-dot" data-color="#a29bfe" style="background:#a29bfe"></span>
+                        <span class="color-dot" data-color="#fd79a8" style="background:#fd79a8"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑页面（裁剪/旋转/调色/黑白/压缩） -->
+        <div id="edit-page" class="page">
+            <header class="page-header">
+                <button class="back-btn" data-back>← 返回</button>
+                <div class="header-actions">
+                    <button class="icon-btn" id="undoBtn" disabled title="撤销">↩</button>
+                    <button class="icon-btn" id="redoBtn" disabled title="重做">↪</button>
+                    <button class="icon-btn" id="compareBtn" title="原图对比">⇔</button>
+                    <button class="icon-btn" id="textModeBtn" title="文字">T</button>
+                    <button class="icon-btn" id="mosaicModeBtn" title="马赛克">◻</button>
+                    <button class="icon-btn" id="brushModeBtn" title="画笔">✎</button>
+                    <button class="icon-btn" id="stickerModeBtn" title="贴纸">☺</button>
+                    <button class="icon-btn" id="borderModeBtn" title="边框">□</button>
+                </div>
+                <h2 id="editTitle">图片编辑</h2>
+                <button class="save-btn" id="editSaveBtn">保存</button>
+            </header>
+            <div class="canvas-wrap" id="editCanvasWrap">
+                <div class="canvas-container" id="editCanvasContainer">
+                    <canvas id="editCanvas"></canvas>
+                    <canvas id="paintCanvas" style="display:none;position:absolute;top:0;left:0;touch-action:none;z-index:4;pointer-events:auto;"></canvas>
+                    <canvas id="circleCropCanvas" style="display:none;position:absolute;top:0;left:0;touch-action:none;z-index:5;pointer-events:auto;cursor:move;"></canvas>
+                    <div class="text-overlay" id="textOverlay" style="display:none">
+                        <div class="text-preview" id="textPreview">文字</div>
+                    </div>
+                    <div class="compare-overlay" id="compareOverlay" style="display:none">
+                        <div class="compare-original" id="compareOriginal"></div>
+                        <div class="compare-divider" id="compareDivider">
+                            <div class="compare-handle">⇔</div>
+                        </div>
+                        <div class="compare-label compare-label-left">原图</div>
+                        <div class="compare-label compare-label-right">编辑</div>
+                    </div>
+                    <div class="crop-overlay" id="cropOverlay" style="display:none">
+                        <div class="crop-mask-top"></div>
+                        <div class="crop-mask-right"></div>
+                        <div class="crop-mask-bottom"></div>
+                        <div class="crop-mask-left"></div>
+                        <div class="crop-selection" id="cropSelection">
+                            <div class="crop-handle tl" data-handle="tl"></div>
+                            <div class="crop-handle tr" data-handle="tr"></div>
+                            <div class="crop-handle bl" data-handle="bl"></div>
+                            <div class="crop-handle br" data-handle="br"></div>
+                            <div class="crop-handle tm" data-handle="tm"></div>
+                            <div class="crop-handle bm" data-handle="bm"></div>
+                            <div class="crop-handle ml" data-handle="ml"></div>
+                            <div class="crop-handle mr" data-handle="mr"></div>
+                            <div class="crop-grid"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="import-area">
+                <button class="import-btn" id="addEditPhotoBtn">+ 选择图片</button>
+                <input type="file" id="editPhotoInput" accept="image/*" hidden>
+            </div>
+
+            <!-- 裁剪工具栏 -->
+            <div class="edit-toolbar" id="cropTools" style="display:none">
+                <button class="tool-btn active" data-crop="free">自由</button>
+                <button class="tool-btn" data-crop="1:1">1:1</button>
+                <button class="tool-btn" data-crop="4:3">4:3</button>
+                <button class="tool-btn" data-crop="16:9">16:9</button>
+                <button class="tool-btn" data-crop="3:4">3:4</button>
+                <button class="tool-btn primary" id="cropConfirmBtn">确认裁剪</button>
+                <button class="tool-btn" id="cropCancelBtn">取消</button>
+            </div>
+
+            <!-- 旋转工具栏 -->
+            <div class="edit-toolbar" id="rotateTools" style="display:none">
+                <button class="tool-btn" data-rotate="left">左转90°</button>
+                <button class="tool-btn" data-rotate="right">右转90°</button>
+                <button class="tool-btn" data-rotate="180">旋转180°</button>
+                <button class="tool-btn" data-rotate="flipH">水平翻转</button>
+                <button class="tool-btn" data-rotate="flipV">垂直翻转</button>
+            </div>
+
+            <!-- 任意角度旋转 -->
+            <div class="edit-toolbar vertical" id="freeRotateTools" style="display:none">
+                <div class="setting-row">
+                    <label>角度</label>
+                    <input type="range" id="freeRotateAngle" min="-180" max="180" value="0">
+                    <span id="freeRotateAngleVal">0°</span>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="tool-btn primary" id="freeRotateConfirm" style="flex:1">确认旋转</button>
+                    <button class="tool-btn" id="freeRotateCancel" style="flex:1">取消</button>
+                </div>
+            </div>
+
+            <!-- 滤镜预设 -->
+            <div class="edit-toolbar" id="filterTools" style="display:none">
+                <div class="filter-scroll" id="filterScroll"></div>
+            </div>
+
+            <!-- 文字工具栏 -->
+            <div class="edit-toolbar vertical" id="textTools" style="display:none">
+                <div class="setting-row">
+                    <label>文字</label>
+                    <input type="text" id="textInput" placeholder="输入文字" style="flex:1">
+                </div>
+                <div class="setting-row">
+                    <label>字体</label>
+                    <select id="fontFamily">
+                        <option value="sans-serif">无衬线</option>
+                        <option value="serif">衬线</option>
+                        <option value="monospace">等宽</option>
+                        <option value="SimSun, serif">宋体</option>
+                        <option value="SimHei, sans-serif">黑体</option>
+                        <option value="KaiTi, serif">楷体</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>字号</label>
+                    <input type="range" id="fontSize" min="12" max="200" value="48">
+                    <span id="fontSizeVal">48</span>
+                </div>
+                <div class="setting-row">
+                    <label>颜色</label>
+                    <div class="color-options" id="textColors">
+                        <span class="color-dot active" data-color="#ffffff" style="background:#ffffff"></span>
+                        <span class="color-dot" data-color="#000000" style="background:#000000"></span>
+                        <span class="color-dot" data-color="#ff4757" style="background:#ff4757"></span>
+                        <span class="color-dot" data-color="#ffa502" style="background:#ffa502"></span>
+                        <span class="color-dot" data-color="#2ed573" style="background:#2ed573"></span>
+                        <span class="color-dot" data-color="#1e90ff" style="background:#1e90ff"></span>
+                        <span class="color-dot" data-color="#a29bfe" style="background:#a29bfe"></span>
+                        <span class="color-dot" data-color="#fd79a8" style="background:#fd79a8"></span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>透明度</label>
+                    <input type="range" id="textOpacity" min="10" max="100" value="100">
+                    <span id="textOpacityVal">100%</span>
+                </div>
+                <p class="hint">拖拽画布上的文字可调整位置</p>
+                <div class="setting-row">
+                    <label>加粗</label>
+                    <button class="toggle-btn" id="boldToggle">B</button>
+                    <label style="width:auto">阴影</label>
+                    <button class="toggle-btn" id="shadowToggle">S</button>
+                </div>
+                <button class="tool-btn primary" id="addTextBtn">添加文字</button>
+            </div>
+
+            <!-- 马赛克工具栏 -->
+            <div class="edit-toolbar vertical" id="mosaicTools" style="display:none">
+                <div class="setting-row">
+                    <label>模式</label>
+                    <div class="fill-mode-bar">
+                        <button class="fill-btn active" data-mosaic="pixel">马赛克</button>
+                        <button class="fill-btn" data-mosaic="blur">模糊</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>大小</label>
+                    <input type="range" id="mosaicSize" min="5" max="50" value="15">
+                    <span id="mosaicSizeVal">15</span>
+                </div>
+                <button class="tool-btn primary" id="applyMosaicBtn">应用</button>
+                <p class="hint">在画布上涂抹要打码的区域</p>
+            </div>
+
+            <!-- 画笔工具栏 -->
+            <div class="edit-toolbar vertical" id="brushTools" style="display:none">
+                <div class="setting-row">
+                    <label>粗细</label>
+                    <input type="range" id="brushSize" min="2" max="50" value="8">
+                    <span id="brushSizeVal">8</span>
+                </div>
+                <div class="setting-row">
+                    <label>颜色</label>
+                    <div class="color-options" id="brushColors">
+                        <span class="color-dot active" data-color="#ff4757" style="background:#ff4757"></span>
+                        <span class="color-dot" data-color="#ffffff" style="background:#ffffff"></span>
+                        <span class="color-dot" data-color="#000000" style="background:#000000"></span>
+                        <span class="color-dot" data-color="#ffa502" style="background:#ffa502"></span>
+                        <span class="color-dot" data-color="#2ed573" style="background:#2ed573"></span>
+                        <span class="color-dot" data-color="#1e90ff" style="background:#1e90ff"></span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>透明度</label>
+                    <input type="range" id="brushOpacity" min="10" max="100" value="100">
+                    <span id="brushOpacityVal">100%</span>
+                </div>
+                <button class="tool-btn primary" id="applyBrushBtn">应用</button>
+                <p class="hint">在画布上自由绘画</p>
+            </div>
+
+            <!-- 贴纸工具栏 -->
+            <div class="edit-toolbar" id="stickerTools" style="display:none">
+                <div class="sticker-scroll" id="stickerScroll"></div>
+                <button class="tool-btn primary" id="applyStickerBtn">完成</button>
+            </div>
+
+            <!-- 边框工具栏 -->
+            <div class="edit-toolbar vertical" id="borderTools" style="display:none">
+                <div class="setting-row">
+                    <label>样式</label>
+                    <div class="fill-mode-bar">
+                        <button class="fill-btn active" data-border="none">无</button>
+                        <button class="fill-btn" data-border="solid">纯色</button>
+                        <button class="fill-btn" data-border="shadow">阴影</button>
+                        <button class="fill-btn" data-border="rounded">圆角</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>宽度</label>
+                    <input type="range" id="borderWidth" min="0" max="80" value="20">
+                    <span id="borderWidthVal">20</span>
+                </div>
+                <div class="setting-row">
+                    <label>颜色</label>
+                    <div class="color-options" id="borderColors">
+                        <span class="color-dot active" data-color="#ffffff" style="background:#ffffff"></span>
+                        <span class="color-dot" data-color="#000000" style="background:#000000"></span>
+                        <span class="color-dot" data-color="#f5f5f5" style="background:#f5f5f5"></span>
+                        <span class="color-dot" data-color="#ff6b6b" style="background:#ff6b6b"></span>
+                        <span class="color-dot" data-color="#4ecdc4" style="background:#4ecdc4"></span>
+                        <span class="color-dot" data-color="#a29bfe" style="background:#a29bfe"></span>
+                    </div>
+                </div>
+                <button class="tool-btn primary" id="applyBorderBtn">应用边框</button>
+            </div>
+
+            <!-- 局部色彩工具栏 -->
+            <div class="edit-toolbar vertical" id="selectiveColorTools" style="display:none">
+                <div class="setting-row">
+                    <label>保留色</label>
+                    <div class="color-options" id="selectiveColors">
+                        <span class="color-dot active" data-hue="0" style="background:#ff0000" title="红色"></span>
+                        <span class="color-dot" data-hue="30" style="background:#ff8800" title="橙色"></span>
+                        <span class="color-dot" data-hue="60" style="background:#ffff00" title="黄色"></span>
+                        <span class="color-dot" data-hue="120" style="background:#00cc00" title="绿色"></span>
+                        <span class="color-dot" data-hue="210" style="background:#0066ff" title="蓝色"></span>
+                        <span class="color-dot" data-hue="280" style="background:#9900ff" title="紫色"></span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label>容差</label>
+                    <input type="range" id="selectiveTolerance" min="10" max="80" value="30">
+                    <span id="selectiveToleranceVal">30</span>
+                </div>
+                <button class="tool-btn primary" id="applySelectiveColorBtn">应用局部色彩</button>
+                <p class="hint">保留所选颜色，其余转为黑白</p>
+            </div>
+
+            <!-- 圆形裁剪工具栏 -->
+            <div class="edit-toolbar vertical" id="circleCropTools" style="display:none">
+                <div class="setting-row">
+                    <label>大小</label>
+                    <input type="range" id="circleCropSize" min="10" max="100" value="80">
+                    <span id="circleCropSizeVal">80%</span>
+                </div>
+                <div class="setting-row">
+                    <label>背景</label>
+                    <div class="fill-mode-bar">
+                        <button class="fill-btn active" data-circle-bg="transparent">透明</button>
+                        <button class="fill-btn" data-circle-bg="#ffffff">白色</button>
+                        <button class="fill-btn" data-circle-bg="#000000">黑色</button>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="tool-btn primary" id="circleCropConfirm" style="flex:1">确认裁剪</button>
+                    <button class="tool-btn" id="circleCropCancel" style="flex:1">取消</button>
+                </div>
+            </div>
+
+            <!-- 调色工具栏 -->
+            <div class="edit-toolbar vertical" id="adjustTools" style="display:none">
+                <div class="setting-row">
+                    <label>亮度</label>
+                    <input type="range" id="brightness" min="-100" max="100" value="0">
+                    <span id="brightnessVal">0</span>
+                </div>
+                <div class="setting-row">
+                    <label>对比度</label>
+                    <input type="range" id="contrast" min="-100" max="100" value="0">
+                    <span id="contrastVal">0</span>
+                </div>
+                <div class="setting-row">
+                    <label>饱和度</label>
+                    <input type="range" id="saturate" min="-100" max="100" value="0">
+                    <span id="saturateVal">0</span>
+                </div>
+                <div class="setting-row">
+                    <label>锐化</label>
+                    <input type="range" id="sharpness" min="0" max="100" value="0">
+                    <span id="sharpVal">0</span>
+                </div>
+                <div class="setting-row">
+                    <label>色温</label>
+                    <input type="range" id="temperature" min="-100" max="100" value="0">
+                    <span id="tempVal">0</span>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="tool-btn primary" id="autoAdjustBtn" style="flex:1">智能调节</button>
+                    <button class="tool-btn reset-btn" id="resetAdjust" style="flex:1;margin-top:0">重置</button>
+                </div>
+            </div>
+
+            <!-- 黑白二值工具栏 -->
+            <div class="edit-toolbar vertical" id="bwTools" style="display:none">
+                <div class="setting-row">
+                    <label>微调</label>
+                    <input type="range" id="bwThreshold" min="-128" max="128" value="0">
+                    <span id="bwThresholdVal">0</span>
+                </div>
+                <p class="hint">自动计算最佳阈值，滑块微调偏移（左=白多，右=黑多）</p>
+            </div>
+
+            <!-- 压缩转换工具栏 -->
+            <div class="edit-toolbar vertical" id="compressTools" style="display:none">
+                <div class="setting-row">
+                    <label>输出格式</label>
+                    <select id="outputFormat">
+                        <option value="image/jpeg">JPG</option>
+                        <option value="image/png">PNG</option>
+                        <option value="image/webp">WebP</option>
+                    </select>
+                </div>
+                <div class="setting-row" id="qualityRow">
+                    <label>质量</label>
+                    <input type="range" id="quality" min="10" max="100" value="80">
+                    <span id="qualityVal">80%</span>
+                </div>
+                <p class="hint" id="pngHint" style="display:none">PNG 为无损格式，质量设置不影响文件大小</p>
+                <p class="hint" id="webpHint" style="display:none">部分浏览器的 WebP 质量参数可能不生效</p>
+                <div class="setting-row" id="sizeInfo">
+                    <label>预估大小</label>
+                    <span id="estSize">-</span>
+                </div>
+                <button class="tool-btn" id="convertBtn">转换并下载</button>
+            </div>
+        </div>
+
+        <!-- 抠图页面 -->
+        <div id="cutout-page" class="page">
+            <header class="page-header">
+                <button class="back-btn" data-back>← 返回</button>
+                <h2>智能抠图</h2>
+                <button class="save-btn" id="cutoutSaveBtn">保存</button>
+            </header>
+            <div class="canvas-wrap checkerboard">
+                <canvas id="cutoutCanvas"></canvas>
+            </div>
+            <div class="import-area">
+                <button class="import-btn" id="addCutoutPhotoBtn">+ 选择图片</button>
+                <input type="file" id="cutoutPhotoInput" accept="image/*" hidden>
+            </div>
+            <div class="edit-toolbar vertical" id="cutoutTools" style="display:none">
+                <div class="setting-row">
+                    <label>背景色</label>
+                    <div class="fill-mode-bar">
+                        <button class="fill-btn active" data-cutout-bg="transparent">透明</button>
+                        <button class="fill-btn" data-cutout-bg="#ffffff">白色</button>
+                        <button class="fill-btn" data-cutout-bg="#000000">黑色</button>
+                    </div>
+                </div>
+                <button class="tool-btn primary" id="doCutoutBtn">一键抠图</button>
+                <p class="hint">使用 remove.bg API，每月免费50次</p>
+                <div class="setting-row">
+                    <label>API Key</label>
+                    <input type="text" id="apiKeyInput" placeholder="输入 remove.bg API Key" style="flex:1">
+                </div>
+                <a href="https://www.remove.bg/api" target="_blank" class="link">免费获取 API Key →</a>
+            </div>
+        </div>
+
+        <!-- 批量处理页面 -->
+        <div id="batch-page" class="page">
+            <header class="page-header">
+                <button class="back-btn" data-back>← 返回</button>
+                <h2>批量处理</h2>
+                <button class="save-btn" id="batchExportBtn">批量导出</button>
+            </header>
+            <div class="import-area">
+                <button class="import-btn" id="addBatchPhotosBtn">+ 选择多张图片</button>
+                <input type="file" id="batchPhotoInput" accept="image/*" multiple hidden>
+            </div>
+            <div class="slots-bar" id="batchSlotsBar"></div>
+            <div class="settings-panel" id="batchSettings" style="display:none">
+                <div class="setting-row">
+                    <label>操作</label>
+                    <select id="batchOperation">
+                        <option value="filter">应用滤镜</option>
+                        <option value="bw">黑白</option>
+                        <option value="compress">压缩转换</option>
+                        <option value="brightness">提亮</option>
+                        <option value="contrast">增强对比</option>
+                    </select>
+                </div>
+                <div class="setting-row" id="batchFilterRow">
+                    <label>滤镜</label>
+                    <select id="batchFilterSelect"></select>
+                </div>
+                <div class="setting-row" id="batchQualityRow" style="display:none">
+                    <label>质量</label>
+                    <input type="range" id="batchQuality" min="10" max="100" value="80">
+                    <span id="batchQualityVal">80%</span>
+                </div>
+                <div class="setting-row" id="batchFormatRow" style="display:none">
+                    <label>格式</label>
+                    <select id="batchFormat">
+                        <option value="image/jpeg">JPG</option>
+                        <option value="image/png">PNG</option>
+                        <option value="image/webp">WebP</option>
+                    </select>
+                </div>
+                <div class="canvas-wrap" style="min-height:120px">
+                    <canvas id="batchPreviewCanvas" style="max-height:150px"></canvas>
+                </div>
+                <p class="hint" id="batchHint">已选择 0 张图片</p>
+            </div>
+        </div>
+
+        <!-- 图片分割页面 -->
+        <div id="split-page" class="page">
+            <header class="page-header">
+                <button class="back-btn" data-back>← 返回</button>
+                <h2>图片分割</h2>
+                <button class="save-btn" id="splitExportBtn">下载全部</button>
+            </header>
+            <div class="import-area">
+                <button class="import-btn" id="addSplitPhotoBtn">+ 选择图片</button>
+                <input type="file" id="splitPhotoInput" accept="image/*" hidden>
+            </div>
+            <div class="template-bar" id="splitTemplates">
+                <button class="tpl-btn active" data-split="2x2">2×2</button>
+                <button class="tpl-btn" data-split="3x3">3×3</button>
+                <button class="tpl-btn" data-split="2x3">2×3</button>
+                <button class="tpl-btn" data-split="3x2">3×2</button>
+                <button class="tpl-btn" data-split="1x3">1×3</button>
+                <button class="tpl-btn" data-split="3x1">3×1</button>
+            </div>
+            <div class="canvas-wrap" id="splitPreviewWrap">
+                <canvas id="splitPreviewCanvas"></canvas>
+            </div>
+            <div class="split-grid" id="splitGrid"></div>
+        </div>
+
+        <!-- 加载遮罩 -->
+        <div id="loading" class="loading-overlay" style="display:none">
+            <div class="spinner"></div>
+            <p id="loadingText">处理中...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
